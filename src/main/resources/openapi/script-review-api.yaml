@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: Script Review API
   version: 1.0.0
-  description: API for film script submission and workflow analysis
+  description: API for film script submission and tracking
 
 paths:
   /scripts:
@@ -10,25 +10,38 @@ paths:
       summary: Submit a new script
       operationId: submitScript
       requestBody:
+        required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/ScriptRequest'
       responses:
         '201':
-          description: Script submitted
+          description: Script submitted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScriptResponse'
+
   /scripts/{id}/status:
     get:
-      summary: Get script status
+      summary: Get script status by ID
+      operationId: getScriptStatus
       parameters:
-        - in: path
-          name: id
+        - name: id
+          in: path
           required: true
           schema:
-            type: string
+            type: integer
       responses:
         '200':
-          description: Status found
+          description: Script status returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScriptStatus'
+        '404':
+          description: Script not found
 
 components:
   schemas:
@@ -41,6 +54,30 @@ components:
           type: string
         client:
           $ref: '#/components/schemas/Client'
+      required:
+        - title
+        - content
+        - client
+
+    ScriptResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        status:
+          $ref: '#/components/schemas/ScriptStatus'
+
+    ScriptStatus:
+      type: string
+      enum:
+        - AWAITING_ANALYSIS
+        - IN_ANALYSIS
+        - AWAITING_REVIEW
+        - IN_REVIEW
+        - AWAITING_APPROVAL
+        - IN_APPROVAL
+        - APPROVED
+        - REJECTED
 
     Client:
       type: object
@@ -51,3 +88,7 @@ components:
           type: string
         phone:
           type: string
+      required:
+        - name
+        - email
+        - phone
