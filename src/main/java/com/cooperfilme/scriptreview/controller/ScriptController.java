@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/scripts")
 @RequiredArgsConstructor
@@ -26,5 +28,14 @@ public class ScriptController {
         return scriptService.getScriptStatus(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PutMapping("/{id}/status")
+    public ResponseEntity<Void> updateStatus(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> body) {
+        ScriptStatus newStatus = ScriptStatus.valueOf(body.get("status"));
+        scriptService.updateStatus(id, newStatus);
+        return ResponseEntity.noContent().build();
     }
 }
