@@ -2,10 +2,13 @@ package com.cooperfilme.scriptreview.service;
 
 import com.cooperfilme.scriptreview.enums.ScriptStatus;
 import com.cooperfilme.scriptreview.exception.InvalidStatusTransitionException;
+import org.springframework.stereotype.Component;
+
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 
+@Component
 public class ScriptStatusFlowValidator {
 
     private static final Map<ScriptStatus, List<ScriptStatus>> TRANSITIONS = new EnumMap<>(ScriptStatus.class);
