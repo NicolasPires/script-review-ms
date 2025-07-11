@@ -78,6 +78,36 @@ paths:
         '404':
           description: Script not found
 
+    put:
+      tags:
+        - Scripts
+      summary: Update script status
+      operationId: updateScriptStatus
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  $ref: '#/components/schemas/ScriptStatus'
+            example:
+              status: IN_ANALYSIS
+      responses:
+        '204':
+          description: Status updated successfully
+        '400':
+          description: Invalid status transition
+        '404':
+          description: Script not found
+
   /auth/login:
     post:
       tags:
