@@ -8,9 +8,18 @@ servers:
   - url: https://mock.scriptreview.api
     description: Mock server for front-end testing
 
+tags:
+  - name: Scripts
+    description: Endpoints for script submission and tracking
+
+  - name: Authentication
+    description: Endpoints for user login and token management
+
 paths:
   /scripts:
     post:
+      tags:
+        - Scripts
       summary: Submit a new script
       operationId: submitScript
       requestBody:
@@ -45,6 +54,8 @@ paths:
 
   /scripts/{id}/status:
     get:
+      tags:
+        - Scripts
       summary: Get script status by ID
       operationId: getScriptStatus
       parameters:
@@ -66,6 +77,33 @@ paths:
                   value: AWAITING_ANALYSIS
         '404':
           description: Script not found
+
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: User login
+      description: Authenticates user and returns JWT token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthRequestDTO'
+            example:
+              email: analyst@cooperfilme.com
+              password: 123456
+      responses:
+        '200':
+          description: Successful authentication
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponseDTO'
+              example:
+                token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        '401':
+          description: Unauthorized
 
 components:
   schemas:
@@ -116,3 +154,20 @@ components:
         - name
         - email
         - phone
+
+    AuthRequestDTO:
+      type: object
+      properties:
+        email:
+          type: string
+          example: analyst@cooperfilme.com
+        password:
+          type: string
+          example: 123456
+
+    AuthResponseDTO:
+      type: object
+      properties:
+        token:
+          type: string
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."

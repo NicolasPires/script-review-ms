@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -19,12 +20,17 @@ import org.springframework.stereotype.Service;
 public class AuthenticationService implements UserDetailsService {
 
     private final UserRepository userRepository;
-    private final AuthenticationManager authenticationManager;
+    private final AuthenticationConfiguration authenticationConfiguration;
 
     public Authentication authenticate(AuthRequestDTO request) {
-        return authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
-        );
+        try {
+            AuthenticationManager authenticationManager = authenticationConfiguration.getAuthenticationManager();
+            return authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
+            );
+        } catch (Exception e) {
+            throw new RuntimeException("Authentication failed", e);
+        }
     }
 
     @Override
