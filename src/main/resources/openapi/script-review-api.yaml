@@ -1,0 +1,53 @@
+openapi: 3.0.3
+info:
+  title: Script Review API
+  version: 1.0.0
+  description: API for film script submission and workflow analysis
+
+paths:
+  /scripts:
+    post:
+      summary: Submit a new script
+      operationId: submitScript
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScriptRequest'
+      responses:
+        '201':
+          description: Script submitted
+  /scripts/{id}/status:
+    get:
+      summary: Get script status
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Status found
+
+components:
+  schemas:
+    ScriptRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        content:
+          type: string
+        client:
+          $ref: '#/components/schemas/Client'
+
+    Client:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
