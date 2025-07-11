@@ -4,6 +4,10 @@ info:
   version: 1.0.0
   description: API for film script submission and tracking
 
+servers:
+  - url: https://mock.scriptreview.api
+    description: Mock server for front-end testing
+
 paths:
   /scripts:
     post:
@@ -15,6 +19,16 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ScriptRequest'
+            examples:
+              validRequest:
+                summary: Valid submission
+                value:
+                  title: "A Great Journey"
+                  content: "Once upon a time in a world of wonders..."
+                  client:
+                    name: "Jane Doe"
+                    email: "jane@example.com"
+                    phone: "123456789"
       responses:
         '201':
           description: Script submitted successfully
@@ -22,6 +36,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ScriptResponse'
+              examples:
+                success:
+                  summary: Script submission response
+                  value:
+                    id: 1
+                    status: AWAITING_ANALYSIS
 
   /scripts/{id}/status:
     get:
@@ -40,6 +60,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ScriptStatus'
+              examples:
+                found:
+                  summary: Script found
+                  value: AWAITING_ANALYSIS
         '404':
           description: Script not found
 
