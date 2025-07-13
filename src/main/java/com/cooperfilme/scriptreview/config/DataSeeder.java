@@ -45,7 +45,7 @@ public class DataSeeder {
                 userRepository.save(reviewer);
                 userRepository.saveAll(approvers);
 
-                System.out.println("✔ Usuários padrão criados com sucesso.");
+                System.out.println("✔ Default users successfully created.");
             }
         };
     }

@@ -1,7 +1,6 @@
 package com.cooperfilme.scriptreview.service;
 
 import com.cooperfilme.scriptreview.dto.request.AuthRequestDTO;
-import com.cooperfilme.scriptreview.entity.User;
 import com.cooperfilme.scriptreview.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Lazy;
@@ -33,7 +32,7 @@ public class AuthenticationService implements UserDetailsService {
                     new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
             );
         } catch (AuthenticationException ex) {
-            throw new BadCredentialsException("E-mail ou senha inválidos", ex);
+            throw new BadCredentialsException("Invalid e-mail or password", ex);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

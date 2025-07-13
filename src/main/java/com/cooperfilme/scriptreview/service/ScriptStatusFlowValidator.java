@@ -2,29 +2,41 @@ package com.cooperfilme.scriptreview.service;
 
 import com.cooperfilme.scriptreview.enums.ScriptStatus;
 import com.cooperfilme.scriptreview.exception.InvalidStatusTransitionException;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
-import java.util.EnumMap;
-import java.util.List;
-import java.util.Map;
-
+@RequiredArgsConstructor
 @Component
 public class ScriptStatusFlowValidator {
 
-    private static final Map<ScriptStatus, List<ScriptStatus>> TRANSITIONS = new EnumMap<>(ScriptStatus.class);
-
-    static {
-        TRANSITIONS.put(ScriptStatus.AWAITING_ANALYSIS, List.of(ScriptStatus.IN_ANALYSIS));
-        TRANSITIONS.put(ScriptStatus.IN_ANALYSIS, List.of(ScriptStatus.AWAITING_REVIEW, ScriptStatus.REJECTED));
-        TRANSITIONS.put(ScriptStatus.AWAITING_REVIEW, List.of(ScriptStatus.IN_REVIEW));
-        TRANSITIONS.put(ScriptStatus.IN_REVIEW, List.of(ScriptStatus.AWAITING_APPROVAL));
-        TRANSITIONS.put(ScriptStatus.AWAITING_APPROVAL, List.of(ScriptStatus.IN_APPROVAL, ScriptStatus.REJECTED));
-        TRANSITIONS.put(ScriptStatus.IN_APPROVAL, List.of(ScriptStatus.APPROVED, ScriptStatus.REJECTED));
-    }
+    private final RoleBasedStatusTransition roleBasedStatusTransition;
 
     public void validate(ScriptStatus current, ScriptStatus target) {
-        if (!TRANSITIONS.getOrDefault(current, List.of()).contains(target)) {
-            throw new InvalidStatusTransitionException("Invalid transition: " + current + " → " + target);
+        String role = getLoggedUserRole();
+
+        boolean allowed = roleBasedStatusTransition.isAllowed(role, current, target);
+
+        if (!allowed) {
+            throw new InvalidStatusTransitionException(
+                    String.format("User with role '%s' is not allowed to transition from %s to %s", role, current, target)
+            );
         }
+    }
+
+    private String getLoggedUserRole() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null || authentication.getAuthorities() == null) {
+            throw new AccessDeniedException("User is not authenticated or has no assigned role");
+        }
+
+        return authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .findFirst()
+                .orElseThrow(() -> new AccessDeniedException("User has no assigned role"));
     }
 }
