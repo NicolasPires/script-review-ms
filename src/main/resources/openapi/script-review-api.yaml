@@ -4,109 +4,23 @@ info:
   version: 1.0.0
   description: API for film script submission and tracking
 servers:
+  - url: https://virtserver.swaggerhub.com/nksolucoes/script-review-api/1.0.0
+    description: SwaggerHub Mock Server
   - url: https://mock.scriptreview.api
     description: Mock server for front-end testing
+  - url: http://localhost:8080
+    description: Local development server
 tags:
   - name: Scripts
     description: Endpoints for script submission and tracking
   - name: Authentication
     description: Endpoints for user login and token management
 paths:
-  /scripts:
-    post:
-      tags:
-        - Scripts
-      summary: Submit a new script
-      operationId: submitScript
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ScriptRequest'
-            examples:
-              validRequest:
-                summary: Valid submission
-                value:
-                  title: A Great Journey
-                  content: Once upon a time in a world of wonders...
-                  client:
-                    name: Jane Doe
-                    email: jane@example.com
-                    phone: '123456789'
-      responses:
-        '201':
-          description: Script submitted successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ScriptResponse'
-              examples:
-                success:
-                  summary: Script submission response
-                  value:
-                    id: 1
-                    status: AWAITING_ANALYSIS
-  /scripts/{id}/status:
-    get:
-      tags:
-        - Scripts
-      summary: Get script status by ID
-      operationId: getScriptStatus
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        '200':
-          description: Script status returned
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ScriptStatus'
-              examples:
-                found:
-                  summary: Script found
-                  value: AWAITING_ANALYSIS
-        '404':
-          description: Script not found
-    put:
-      tags:
-        - Scripts
-      summary: Update script status
-      operationId: updateScriptStatus
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                status:
-                  $ref: '#/components/schemas/ScriptStatus'
-            example:
-              status: IN_ANALYSIS
-      responses:
-        '204':
-          description: Status updated successfully
-        '400':
-          description: Invalid status transition
-        '404':
-          description: Script not found
   /auth/login:
     post:
       tags:
         - Authentication
       summary: User login
-      description: Authenticates user and returns JWT token
       requestBody:
         required: true
         content:
@@ -127,12 +41,114 @@ paths:
                 token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
         '401':
           description: Unauthorized
-  /scripts/{id}/vote:
+
+  /scripts:
     post:
       tags:
         - Scripts
+      summary: Submit a new script
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScriptRequest'
+            example:
+              title: A Great Journey
+              content: Once upon a time...
+              client:
+                name: Jane Doe
+                email: jane@example.com
+                phone: '123456789'
+      responses:
+        '201':
+          description: Script submitted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScriptResponse'
+              example:
+                id: 1
+                status: AWAITING_ANALYSIS
+
+    get:
+      security:
+        - bearerAuth: []
+      tags:
+        - Scripts
+      summary: List all scripts
+      responses:
+        '200':
+          description: List of scripts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ScriptResponse'
+
+  /scripts/{id}/status:
+    get:
+      tags:
+        - Scripts
+      summary: Get script status by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Script status returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScriptStatus'
+              example: AWAITING_ANALYSIS
+        '404':
+          description: Script not found
+
+    put:
+      security:
+        - bearerAuth: []
+      tags:
+        - Scripts
+      summary: Update script status
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  $ref: '#/components/schemas/ScriptStatus'
+              required:
+                - status
+            example:
+              status: IN_ANALYSIS
+      responses:
+        '204':
+          description: Status updated
+        '400':
+          description: Invalid transition
+        '404':
+          description: Not found
+
+  /scripts/{id}/vote:
+    post:
+      security:
+        - bearerAuth: []
+      tags:
+        - Scripts
       summary: Vote on a script
-      operationId: voteOnScript
       parameters:
         - name: id
           in: path
@@ -145,25 +161,51 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/VoteRequest'
-            example:
-              approved: true
             examples:
-              approveVote:
-                summary: Approve script
-                value:
-                  approved: true
-              rejectVote:
-                summary: Reject script
-                value:
-                  approved: false
+              approve:
+                summary: Approve
+                value: { approved: true }
+              reject:
+                summary: Reject
+                value: { approved: false }
       responses:
         '204':
-          description: Vote recorded successfully
+          description: Vote recorded
         '400':
-          description: Business rule violation (e.g., already voted)
+          description: Business rule violation
         '404':
           description: Script not found
+
+  /scripts/client/{email}:
+    get:
+      tags:
+        - Scripts
+      summary: Get scripts by client email
+      parameters:
+        - name: email
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of client scripts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ScriptResponse'
+        '404':
+          description: No scripts found
+
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
   schemas:
     ScriptRequest:
       type: object
@@ -178,6 +220,7 @@ components:
         - title
         - content
         - client
+
     ScriptResponse:
       type: object
       properties:
@@ -185,6 +228,7 @@ components:
           type: integer
         status:
           $ref: '#/components/schemas/ScriptStatus'
+
     ScriptStatus:
       type: string
       enum:
@@ -196,6 +240,7 @@ components:
         - IN_APPROVAL
         - APPROVED
         - REJECTED
+
     Client:
       type: object
       properties:
@@ -209,26 +254,28 @@ components:
         - name
         - email
         - phone
+
     AuthRequestDTO:
       type: object
       properties:
         email:
           type: string
-          example: analyst@cooperfilme.com
         password:
           type: string
-          example: 123456
+      required:
+        - email
+        - password
+
     AuthResponseDTO:
       type: object
       properties:
         token:
           type: string
-          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
     VoteRequest:
       type: object
       properties:
         approved:
           type: boolean
-          example: true
       required:
         - approved
