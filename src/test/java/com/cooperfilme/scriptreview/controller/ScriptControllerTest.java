@@ -2,11 +2,14 @@ package com.cooperfilme.scriptreview.controller;
 
 import com.cooperfilme.scriptreview.config.TestSecurityConfig;
 import com.cooperfilme.scriptreview.dto.request.ScriptRequestDTO;
+import com.cooperfilme.scriptreview.dto.request.UpdateStatusRequest;
 import com.cooperfilme.scriptreview.dto.request.VoteRequestDTO;
 import com.cooperfilme.scriptreview.dto.response.ScriptResponseDTO;
+import com.cooperfilme.scriptreview.entity.User;
 import com.cooperfilme.scriptreview.enums.ScriptStatus;
 import com.cooperfilme.scriptreview.security.JwtAuthFilter;
 import com.cooperfilme.scriptreview.service.ScriptService;
+import com.cooperfilme.scriptreview.service.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,7 +21,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.Map;
+import java.util.List;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -28,10 +31,10 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(controllers = ScriptController.class,
-           excludeFilters = {
-    @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = JwtAuthFilter.class)
-})
+@WebMvcTest(
+        controllers = ScriptController.class,
+        excludeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = JwtAuthFilter.class)
+)
 @Import(TestSecurityConfig.class)
 class ScriptControllerTest {
 
@@ -40,6 +43,9 @@ class ScriptControllerTest {
 
     @MockBean
     private ScriptService scriptService;
+
+    @MockBean
+    private UserService userService;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -51,7 +57,6 @@ class ScriptControllerTest {
         request.setContent("Content...");
 
         ScriptResponseDTO response = new ScriptResponseDTO(1L, ScriptStatus.AWAITING_ANALYSIS);
-
         when(scriptService.submitScript(any())).thenReturn(response);
 
         mockMvc.perform(post("/scripts")
@@ -72,7 +77,6 @@ class ScriptControllerTest {
                         .with(user("user").roles("ANALYST")))
                 .andExpect(status().isOk())
                 .andExpect(content().json("\"IN_ANALYSIS\""));
-
     }
 
     @Test
@@ -86,11 +90,15 @@ class ScriptControllerTest {
 
     @Test
     void shouldUpdateScriptStatus() throws Exception {
+        UpdateStatusRequest request = new UpdateStatusRequest();
+        request.setNewStatus("IN_ANALYSIS");
+        request.setJustification("Justificativa para atualização");
+
         mockMvc.perform(put("/scripts/1/status")
                         .with(user("user").roles("REVIEWER"))
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(Map.of("status", "IN_ANALYSIS"))))
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isNoContent());
 
         verify(scriptService).updateStatus(1L, ScriptStatus.IN_ANALYSIS);
@@ -101,6 +109,8 @@ class ScriptControllerTest {
         VoteRequestDTO dto = new VoteRequestDTO();
         dto.setApproved(true);
 
+        when(userService.getAuthenticatedUser()).thenReturn(new User());
+
         mockMvc.perform(post("/scripts/1/vote")
                         .with(user("approver").roles("APPROVER"))
                         .with(csrf())
@@ -108,6 +118,26 @@ class ScriptControllerTest {
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isNoContent());
 
-        verify(scriptService).vote(eq(1L), any(), eq(true));
+        verify(scriptService).vote(eq(1L), any(User.class), eq(true));
+    }
+
+    @Test
+    void shouldReturnScriptsByClientEmail() throws Exception {
+        List<ScriptResponseDTO> responseList = List.of(
+                new ScriptResponseDTO(1L, ScriptStatus.AWAITING_ANALYSIS),
+                new ScriptResponseDTO(2L, ScriptStatus.APPROVED)
+        );
+
+        when(scriptService.getByClientEmail("client@example.com")).thenReturn(responseList);
+
+        mockMvc.perform(get("/scripts/client/client@example.com")
+                        .with(user("user").roles("ANALYST")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(1))
+                .andExpect(jsonPath("$[0].status").value("AWAITING_ANALYSIS"))
+                .andExpect(jsonPath("$[1].id").value(2))
+                .andExpect(jsonPath("$[1].status").value("APPROVED"));
+
+        verify(scriptService).getByClientEmail("client@example.com");
     }
 }
