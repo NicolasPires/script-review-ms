@@ -92,4 +92,12 @@ public class ScriptService {
 
         scriptRepository.save(script);
     }
+
+    public List<ScriptResponseDTO> getByClientEmail(String email) {
+        return scriptRepository.findByClientEmail(email)
+                .stream()
+                .map(script -> new ScriptResponseDTO(script.getId(), script.getStatus()))
+                .toList();
+    }
+
 }

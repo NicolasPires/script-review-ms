@@ -43,22 +43,22 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(IOException.class)
     public ResponseEntity<Map<String, String>> handleIO(IOException ex) {
-        return error(HttpStatus.INTERNAL_SERVER_ERROR, "Erro de leitura ou escrita");
+        return error(HttpStatus.INTERNAL_SERVER_ERROR, "Read or write error");
     }
 
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Map<String, String>> handleRuntime(RuntimeException ex) {
-        return error(HttpStatus.INTERNAL_SERVER_ERROR, "Erro inesperado: " + ex.getMessage());
+        return error(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected error: " + ex.getMessage());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, String>> handleValidation(MethodArgumentNotValidException ex) {
-        return error(HttpStatus.BAD_REQUEST, "Dados inválidos");
+        return error(HttpStatus.BAD_REQUEST, "Invalid data");
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<Map<String, String>> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
-        return error(HttpStatus.BAD_REQUEST, "Parâmetro inválido: " + ex.getName());
+        return error(HttpStatus.BAD_REQUEST, "Invalid parameter: " + ex.getName());
     }
 
     private ResponseEntity<Map<String, String>> error(HttpStatus status, String message) {
