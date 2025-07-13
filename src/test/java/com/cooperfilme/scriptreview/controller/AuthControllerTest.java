@@ -1,6 +1,7 @@
 package com.cooperfilme.scriptreview.controller;
 
 import com.cooperfilme.scriptreview.dto.request.AuthRequestDTO;
+import com.cooperfilme.scriptreview.security.JwtAuthFilter;
 import com.cooperfilme.scriptreview.security.JwtTokenProvider;
 import com.cooperfilme.scriptreview.service.AuthenticationService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -9,6 +10,8 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -22,7 +25,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(AuthController.class)
+@WebMvcTest(controllers = AuthController.class,
+        excludeFilters = {
+                @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = JwtAuthFilter.class)
+        })
 @Import(com.cooperfilme.scriptreview.config.TestSecurityConfig.class)
 class AuthControllerTest {
 

@@ -1,15 +1,20 @@
 package com.cooperfilme.scriptreview.controller;
 
+import com.cooperfilme.scriptreview.config.TestSecurityConfig;
 import com.cooperfilme.scriptreview.dto.request.ScriptRequestDTO;
 import com.cooperfilme.scriptreview.dto.request.VoteRequestDTO;
 import com.cooperfilme.scriptreview.dto.response.ScriptResponseDTO;
 import com.cooperfilme.scriptreview.enums.ScriptStatus;
+import com.cooperfilme.scriptreview.security.JwtAuthFilter;
 import com.cooperfilme.scriptreview.service.ScriptService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -23,7 +28,11 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(ScriptController.class)
+@WebMvcTest(controllers = ScriptController.class,
+           excludeFilters = {
+    @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = JwtAuthFilter.class)
+})
+@Import(TestSecurityConfig.class)
 class ScriptControllerTest {
 
     @Autowired
